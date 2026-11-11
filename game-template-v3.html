@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<!-- 鎖死縮放，手機端體驗核心 -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>雙區塊自適應公版 (手動切換版)</title>
+
+<!-- 引入 Tailwind CSS 加速排版 -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  /* 基礎設定：鎖死邊界，禁止原生的雙指放大、下拉更新與捲動 */
+  html, body {
+    margin: 0; 
+    padding: 0;
+    width: 100vw;
+    height: 100dvh; /* 動態視口高度，避開網址列 */
+    overflow: hidden; /* 絕對不出現捲動條 */
+    touch-action: none; /* 廢除瀏覽器預設手勢 */
+    background-color: #f3f4f6; /* 預設背景色 */
+    font-family: sans-serif;
+  }
+
+  /* --- 基礎容器設定 --- */
+  main {
+    width: 100% !important;
+    max-width: 1200px; /* 放寬最大寬度 */
+    margin: 0 auto;
+    padding: 12px;
+    display: flex;
+    height: 100dvh;
+    max-height: 100dvh;
+    transition: all 0.3s ease; /* 切換時加入平滑過場動畫 */
+    box-sizing: border-box;
+  }
+
+  /* --- 共用區塊設定 --- */
+  #display-area {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  #control-area {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* --- 狀態 1：上下排版 (直向模式) --- */
+  main.layout-col {
+    flex-direction: column;
+    gap: 16px;
+  }
+  main.layout-col #display-area {
+    flex: 1; /* 直向時，展示區吸收剩餘空間 */
+    min-height: 0;
+  }
+  main.layout-col #control-area {
+    flex: 0 0 auto; /* 直向時，控制區保持原始大小 */
+  }
+
+  /* --- 狀態 2：左右排版 (橫向模式) --- */
+  main.layout-row {
+    flex-direction: row;
+    align-items: stretch;
+    gap: 24px;
+    padding: 24px;
+  }
+  main.layout-row #display-area {
+    flex: 6; /* 橫向時，展示區佔據 60% */
+  }
+  main.layout-row #control-area {
+    flex: 4; /* 橫向時，控制區佔據 40% */
+    justify-content: center; /* 讓按鈕在右側垂直置中 */
+  }
+</style>
+</head>
+<body>
+
+<!-- 懸浮的版面切換按鈕 -->
+<button id="layout-toggle" class="fixed top-4 right-4 z-50 bg-gray-800 text-white px-3 py-2 rounded-lg shadow-lg opacity-80 hover:opacity-100 transition">
+  切換版面 🔄
+</button>
+
+<!-- 預設給予 layout-col 的 class，JS 會在載入時立刻覆蓋 -->
+<main id="app-main" class="layout-col">
+  
+  <!-- 區塊一：展示區 (題目/圖表/動畫) -->
+  <div id="display-area" class="p-4 items-center justify-center">
+    <h1 class="text-2xl font-bold text-gray-700">這裡是展示區</h1>
+    <p class="text-gray-500 mt-2">無論怎麼切換，這裡永遠顯示題目</p>
+  </div>
+
+  <!-- 區塊二：控制區 (按鈕/鍵盤) -->
+  <div id="control-area" class="grid grid-cols-2 gap-2">
+    <button class="bg-blue-500 text-white p-4 rounded-lg font-bold text-xl">按鈕 A</button>
+    <button class="bg-red-500 text-white p-4 rounded-lg font-bold text-xl">按鈕 B</button>
+    <button class="bg-green-500 text-white p-4 rounded-lg font-bold col-span-2 text-xl">確認送出</button>
+  </div>
+
+</main>
+
+<script>
+  const mainEl = document.getElementById('app-main');
+  const toggleBtn = document.getElementById('layout-toggle');
+
+  // 初始化：網頁第一次打開時，偵測當下螢幕方向來決定初始排版
+  function initLayout() {
+    // 如果螢幕寬度大於高度，且大於 768px (避開小手機)，初始給予左右排版
+    if (window.innerWidth > window.innerHeight && window.innerWidth >= 768) {
+      mainEl.className = 'layout-row';
+    } else {
+      mainEl.className = 'layout-col';
+    }
+  }
+
+  initLayout();
+
+  // 切換按鈕事件：完全由使用者手動決定，無視系統陀螺儀
+  toggleBtn.addEventListener('click', () => {
+    if (mainEl.classList.contains('layout-row')) {
+      mainEl.className = 'layout-col';
+    } else {
+      mainEl.className = 'layout-row';
+    }
+    // 觸發 resize 事件，確保 Canvas 或其他依賴視窗大小的元件能重新計算
+    window.dispatchEvent(new Event('resize'));
+  });
+</script>
+</body>
+</html>
